@@ -480,11 +480,11 @@ const TASKS = [
 
 // 奖品概率表（基于当日集章数，5~8章梯度）
 function getProbability(stampCount) {
-  if (stampCount >= 8) return { points: 0.20, game: 0.40, snack: 0.25, bigSnack: 0.15 };
-  if (stampCount === 7) return { points: 0.30, game: 0.38, snack: 0.22, bigSnack: 0.10 };
-  if (stampCount === 6) return { points: 0.40, game: 0.35, snack: 0.20, bigSnack: 0.05 };
+  if (stampCount >= 8) return { points: 0.15, game: 0.35, snack: 0.25, bigSnack: 0.15, giftPack: 0.10 };
+  if (stampCount === 7) return { points: 0.25, game: 0.33, snack: 0.22, bigSnack: 0.10, giftPack: 0.10 };
+  if (stampCount === 6) return { points: 0.40, game: 0.35, snack: 0.20, bigSnack: 0.05, giftPack: 0 };
   // 默认 5 章
-  return { points: 0.55, game: 0.30, snack: 0.15, bigSnack: 0 };
+  return { points: 0.55, game: 0.30, snack: 0.15, bigSnack: 0, giftPack: 0 };
 }
 
 // ══════════════ 状态管理 ══════════════
@@ -582,6 +582,9 @@ function renderProgress() {
   if (probData.bigSnack > 0) {
     probHTML += ` / <span class="prob-snack">大奖 ${Math.round(probData.bigSnack*100)}%</span>`;
   }
+  if (probData.giftPack > 0) {
+    probHTML += ` / <span class="prob-game">礼包 ${Math.round(probData.giftPack*100)}%</span>`;
+  }
   probHint.innerHTML = probHTML;
 
   // 兑换按钮状态
@@ -669,7 +672,10 @@ function drawPrize(stampCount) {
   if (r < (acc += prob.snack)) {
     return { type: 'snack', emoji: '🍪', name: '零食 1 份' };
   }
-  return { type: 'bigSnack', emoji: '🎁', name: '零食两份（超级大奖）' };
+  if (r < (acc += prob.bigSnack)) {
+    return { type: 'bigSnack', emoji: '🎁', name: '零食两份（超级大奖）' };
+  }
+  return { type: 'giftPack', emoji: '👑', name: '隐藏礼包：10积分 + 游戏1次 + 零食2份' };
 }
 
 // 点击兑换
