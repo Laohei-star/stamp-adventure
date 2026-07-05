@@ -749,6 +749,15 @@ function onTaskClick(taskId, btn) {
   renderProgress();
 }
 
+// 礼包种类（等概率随机）
+const GIFT_PACKS = [
+  { emoji: '👑', name: '隐藏礼包：10积分 + 游戏1次 + 零食2份' },
+  { emoji: '👑', name: '隐藏礼包：10积分 + 游戏2次 + 零食1份' },
+  { emoji: '👑', name: '隐藏礼包：体感游戏1次 + 零食1份 + 神秘碎片1个' },
+  { emoji: '👑', name: '隐藏礼包：游戏1次 + 零食1份 + 神秘碎片1个' },
+  { emoji: '👑', name: '隐藏礼包：10积分 + 神秘碎片2个' },
+];
+
 // 抽奖
 function drawPrize(stampCount) {
   const prob = getProbability(stampCount);
@@ -767,7 +776,9 @@ function drawPrize(stampCount) {
   if (r < (acc += prob.bigSnack)) {
     return { type: 'bigSnack', emoji: '🎁', name: '零食两份（超级大奖）' };
   }
-  return { type: 'giftPack', emoji: '👑', name: '隐藏礼包：10积分 + 游戏1次 + 零食2份' };
+  // 隐藏礼包：从种类中等概率随机选一个
+  const pack = GIFT_PACKS[Math.floor(Math.random() * GIFT_PACKS.length)];
+  return { type: 'giftPack', ...pack };
 }
 
 // 点击兑换
