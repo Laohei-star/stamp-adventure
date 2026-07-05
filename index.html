@@ -129,6 +129,7 @@
   .prob-points { color: #60a5fa; }
   .prob-game { color: var(--purple); }
   .prob-snack { color: var(--gold); }
+  .prob-gift { color: #ff4d4d; text-shadow: 0 0 8px rgba(255,77,77,0.5); }
   /* ══════════════ 任务按钮区 ══════════════ */
   .tasks-grid {
     display: grid;
@@ -583,7 +584,7 @@ function renderProgress() {
     probHTML += ` / <span class="prob-snack">大奖 ${Math.round(probData.bigSnack*100)}%</span>`;
   }
   if (probData.giftPack > 0) {
-    probHTML += ` / <span class="prob-game">礼包 ${Math.round(probData.giftPack*100)}%</span>`;
+    probHTML += ` / <span class="prob-gift">礼包 ${Math.round(probData.giftPack*100)}%</span>`;
   }
   probHint.innerHTML = probHTML;
 
