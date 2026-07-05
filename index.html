@@ -1,0 +1,760 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>修集章冒险</title>
+<style>
+  /* ══════════════ 基础重置 & 变量 ══════════════ */
+  * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  :root {
+    --bg-1: #0a0a14;
+    --bg-2: #14142b;
+    --card-bg: rgba(26, 26, 46, 0.7);
+    --card-border: rgba(255, 255, 255, 0.1);
+    --gold: #fbbf24;
+    --gold-glow: rgba(251, 191, 36, 0.6);
+    --purple: #8b5cf6;
+    --purple-glow: rgba(139, 92, 246, 0.5);
+    --green: #10b981;
+    --text-main: #ffffff;
+    --text-sub: #8888aa;
+  }
+  html, body {
+    height: 100%;
+    font-family: -apple-system, "Microsoft YaHei", "微软雅黑", sans-serif;
+    color: var(--text-main);
+    overflow-x: hidden;
+  }
+  body {
+    min-height: 100vh;
+    background: radial-gradient(ellipse at top, var(--bg-2) 0%, var(--bg-1) 70%);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    position: relative;
+  }
+  /* 背景星点 */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image:
+      radial-gradient(2px 2px at 20% 30%, rgba(255,255,255,0.3), transparent),
+      radial-gradient(1px 1px at 60% 70%, rgba(255,255,255,0.2), transparent),
+      radial-gradient(1.5px 1.5px at 80% 20%, rgba(139,92,246,0.3), transparent),
+      radial-gradient(1px 1px at 30% 80%, rgba(251,191,36,0.2), transparent),
+      radial-gradient(2px 2px at 90% 50%, rgba(255,255,255,0.15), transparent);
+    background-size: 200% 200%;
+    animation: twinkle 8s ease-in-out infinite;
+    pointer-events: none;
+    z-index: 0;
+  }
+  @keyframes twinkle {
+    0%, 100% { opacity: 0.6; }
+    50% { opacity: 1; }
+  }
+
+  /* ══════════════ 主容器 ══════════════ */
+  .container {
+    width: 100%;
+    max-width: 480px;
+    position: relative;
+    z-index: 1;
+  }
+
+  /* ══════════════ 头部 ══════════════ */
+  header {
+    text-align: center;
+    margin-bottom: 24px;
+  }
+  .title {
+    font-size: 28px;
+    font-weight: 800;
+    background: linear-gradient(135deg, var(--gold) 0%, #f59e0b 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    letter-spacing: 2px;
+    margin-bottom: 6px;
+  }
+  .date-display {
+    font-size: 13px;
+    color: var(--text-sub);
+    letter-spacing: 1px;
+  }
+
+  /* ══════════════ 进度区 ══════════════ */
+  .progress-section {
+    background: var(--card-bg);
+    backdrop-filter: blur(12px);
+    border: 1px solid var(--card-border);
+    border-radius: 16px;
+    padding: 18px 20px;
+    margin-bottom: 20px;
+    text-align: center;
+  }
+  .progress-text {
+    font-size: 15px;
+    color: var(--text-sub);
+    margin-bottom: 10px;
+  }
+  .progress-count {
+    color: var(--gold);
+    font-size: 22px;
+    font-weight: 800;
+  }
+  .progress-bar {
+    height: 8px;
+    background: rgba(255,255,255,0.08);
+    border-radius: 4px;
+    overflow: hidden;
+    margin-bottom: 10px;
+  }
+  .progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--purple) 0%, var(--gold) 100%);
+    border-radius: 4px;
+    transition: width 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+    box-shadow: 0 0 12px var(--purple-glow);
+  }
+  .prob-hint {
+    font-size: 12px;
+    color: var(--text-sub);
+    line-height: 1.6;
+  }
+  .prob-hint span { font-weight: 600; }
+  .prob-points { color: #60a5fa; }
+  .prob-game { color: var(--purple); }
+  .prob-snack { color: var(--gold); }
+
+  /* ══════════════ 任务按钮区 ══════════════ */
+  .tasks-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 10px;
+    margin-bottom: 24px;
+  }
+  .task-btn {
+    aspect-ratio: 1;
+    background: var(--card-bg);
+    backdrop-filter: blur(12px);
+    border: 2px solid var(--card-border);
+    border-radius: 16px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+    position: relative;
+    overflow: hidden;
+  }
+  .task-btn:hover:not(.done) {
+    transform: translateY(-3px);
+    border-color: var(--purple);
+    box-shadow: 0 6px 20px var(--purple-glow);
+  }
+  .task-btn:active:not(.done) {
+    transform: translateY(0) scale(0.95);
+  }
+  .task-btn.done {
+    border-color: var(--gold);
+    background: rgba(251, 191, 36, 0.12);
+    box-shadow: 0 0 20px var(--gold-glow);
+    cursor: default;
+  }
+  .task-icon {
+    font-size: 26px;
+    margin-bottom: 4px;
+    transition: transform 0.3s;
+  }
+  .task-btn.done .task-icon {
+    transform: scale(0.7);
+    opacity: 0.4;
+  }
+  .task-name {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text-main);
+    letter-spacing: 0.5px;
+  }
+  .task-btn.done .task-name {
+    color: var(--gold);
+  }
+  /* 盖章效果 */
+  .stamp {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%) rotate(-15deg) scale(0);
+    font-size: 32px;
+    color: var(--gold);
+    text-shadow: 0 0 15px var(--gold-glow);
+    transition: transform 0.4s cubic-bezier(0.34, 1.8, 0.64, 1);
+    pointer-events: none;
+  }
+  .task-btn.done .stamp {
+    transform: translate(-50%, -50%) rotate(-15deg) scale(1);
+  }
+  /* 盖章弹跳动画 */
+  @keyframes stampBounce {
+    0%   { transform: translate(-50%, -50%) rotate(-15deg) scale(0); }
+    60%  { transform: translate(-50%, -50%) rotate(-15deg) scale(1.3); }
+    100% { transform: translate(-50%, -50%) rotate(-15deg) scale(1); }
+  }
+  .task-btn.just-done .stamp {
+    animation: stampBounce 0.4s cubic-bezier(0.34, 1.8, 0.64, 1);
+  }
+
+  /* ══════════════ 兑换按钮 ══════════════ */
+  .redeem-btn {
+    width: 100%;
+    padding: 18px;
+    font-size: 18px;
+    font-weight: 800;
+    letter-spacing: 3px;
+    border: none;
+    border-radius: 16px;
+    cursor: pointer;
+    transition: all 0.3s;
+    position: relative;
+    overflow: hidden;
+    font-family: inherit;
+  }
+  .redeem-btn:disabled {
+    background: rgba(40, 40, 60, 0.6);
+    color: #555566;
+    cursor: not-allowed;
+  }
+  .redeem-btn.active {
+    background: linear-gradient(135deg, var(--purple) 0%, #6366f1 100%);
+    color: #fff;
+    box-shadow: 0 0 30px var(--purple-glow), 0 4px 15px rgba(0,0,0,0.3);
+    animation: pulse 1.8s ease-in-out infinite;
+  }
+  .redeem-btn.active:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 0 40px var(--purple-glow), 0 6px 20px rgba(0,0,0,0.4);
+  }
+  .redeem-btn.active:active {
+    transform: translateY(0) scale(0.98);
+  }
+  .redeem-btn.locked {
+    background: rgba(251, 191, 36, 0.15);
+    color: var(--gold);
+    border: 1px solid rgba(251, 191, 36, 0.3);
+    cursor: default;
+  }
+  @keyframes pulse {
+    0%, 100% { box-shadow: 0 0 30px var(--purple-glow), 0 4px 15px rgba(0,0,0,0.3); }
+    50% { box-shadow: 0 0 45px var(--purple-glow), 0 4px 15px rgba(0,0,0,0.3); }
+  }
+
+  /* ══════════════ 奖品弹窗 ══════════════ */
+  .prize-modal {
+    position: fixed;
+    inset: 0;
+    z-index: 1000;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    background: rgba(0, 0, 0, 0.8);
+    backdrop-filter: blur(8px);
+  }
+  .prize-modal.show {
+    display: flex;
+  }
+  .prize-box {
+    text-align: center;
+    padding: 40px 50px;
+    animation: prizeIn 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+  @keyframes prizeIn {
+    from { opacity: 0; transform: scale(0.5); }
+    to   { opacity: 1; transform: scale(1); }
+  }
+  .chest {
+    font-size: 80px;
+    display: inline-block;
+    margin-bottom: 20px;
+  }
+  .chest.shaking {
+    animation: chestShake 0.6s ease-in-out;
+  }
+  @keyframes chestShake {
+    0%, 100% { transform: rotate(0) scale(1); }
+    20% { transform: rotate(-12deg) scale(1.1); }
+    40% { transform: rotate(12deg) scale(1.1); }
+    60% { transform: rotate(-8deg) scale(1.15); }
+    80% { transform: rotate(8deg) scale(1.15); }
+  }
+  .chest.opening {
+    animation: chestOpen 0.4s ease-out forwards;
+  }
+  @keyframes chestOpen {
+    0% { transform: scale(1.2); }
+    50% { transform: scale(1.5); opacity: 1; }
+    100% { transform: scale(0.8); opacity: 0; }
+  }
+  .prize-result {
+    display: none;
+  }
+  .prize-result.show {
+    display: block;
+    animation: resultIn 0.6s cubic-bezier(0.34, 1.8, 0.64, 1);
+  }
+  @keyframes resultIn {
+    0%   { opacity: 0; transform: scale(0) rotate(-20deg); }
+    60%  { opacity: 1; transform: scale(1.2) rotate(5deg); }
+    100% { opacity: 1; transform: scale(1) rotate(0); }
+  }
+  .prize-emoji {
+    font-size: 72px;
+    margin-bottom: 16px;
+    display: block;
+    filter: drop-shadow(0 0 20px var(--gold-glow));
+  }
+  .prize-label {
+    font-size: 14px;
+    color: var(--text-sub);
+    margin-bottom: 8px;
+    letter-spacing: 2px;
+  }
+  .prize-name {
+    font-size: 28px;
+    font-weight: 800;
+    color: var(--gold);
+    text-shadow: 0 0 20px var(--gold-glow);
+    margin-bottom: 28px;
+    letter-spacing: 1px;
+  }
+  .close-btn {
+    padding: 12px 40px;
+    font-size: 16px;
+    font-weight: 700;
+    letter-spacing: 2px;
+    background: linear-gradient(135deg, var(--purple) 0%, #6366f1 100%);
+    color: #fff;
+    border: none;
+    border-radius: 30px;
+    cursor: pointer;
+    transition: all 0.25s;
+    font-family: inherit;
+  }
+  .close-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px var(--purple-glow);
+  }
+  .close-btn:active {
+    transform: translateY(0) scale(0.96);
+  }
+
+  /* ══════════════ 提示文字 ══════════════ */
+  .footer-hint {
+    text-align: center;
+    margin-top: 16px;
+    font-size: 12px;
+    color: var(--text-sub);
+    letter-spacing: 0.5px;
+  }
+
+  /* ══════════════ 清空按钮 ══════════════ */
+  .reset-btn {
+    display: block;
+    margin: 12px auto 0;
+    padding: 6px 18px;
+    font-size: 12px;
+    color: var(--text-sub);
+    background: transparent;
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 20px;
+    cursor: pointer;
+    transition: all 0.25s;
+    font-family: inherit;
+    letter-spacing: 1px;
+  }
+  .reset-btn:hover {
+    color: #ff6b6b;
+    border-color: rgba(255,107,107,0.4);
+  }
+  .reset-btn.confirm {
+    color: #ff6b6b;
+    border-color: #ff6b6b;
+    background: rgba(255,107,107,0.1);
+    animation: resetPulse 1s ease-in-out infinite;
+  }
+  @keyframes resetPulse {
+    0%, 100% { box-shadow: 0 0 0 rgba(255,107,107,0.4); }
+    50% { box-shadow: 0 0 12px rgba(255,107,107,0.4); }
+  }
+
+  /* ══════════════ 粒子效果 ══════════════ */
+  .particle {
+    position: fixed;
+    pointer-events: none;
+    z-index: 1001;
+    font-size: 20px;
+    animation: particleFly 1s ease-out forwards;
+  }
+  @keyframes particleFly {
+    0% { opacity: 1; transform: translate(0, 0) scale(1); }
+    100% { opacity: 0; transform: translate(var(--dx), var(--dy)) scale(0.3); }
+  }
+
+  /* ══════════════ 响应式 ══════════════ */
+  @media (max-width: 380px) {
+    .title { font-size: 24px; }
+    .task-icon { font-size: 22px; }
+    .task-name { font-size: 10px; }
+    .stamp { font-size: 26px; }
+    .prize-name { font-size: 22px; }
+    .tasks-grid { gap: 8px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="container">
+  <!-- 头部 -->
+  <header>
+    <div class="title">修集章冒险</div>
+    <div class="date-display" id="dateDisplay">— —</div>
+  </header>
+
+  <!-- 进度区 -->
+  <div class="progress-section">
+    <div class="progress-text">
+      已集 <span class="progress-count" id="stampCount">0</span> 个章 · 集齐 5 个可兑换
+    </div>
+    <div class="progress-bar">
+      <div class="progress-fill" id="progressFill" style="width:0%"></div>
+    </div>
+    <div class="prob-hint" id="probHint">
+      集越多章，好奖品概率越高 · 当前：<span class="prob-points">积分 80%</span> / <span class="prob-game">游戏 15%</span> / <span class="prob-snack">零食 5%</span>
+    </div>
+  </div>
+
+  <!-- 任务按钮 -->
+  <div class="tasks-grid" id="tasksGrid">
+    <!-- JS 动态生成 -->
+  </div>
+
+  <!-- 兑换按钮 -->
+  <button class="redeem-btn" id="redeemBtn" disabled>🔒 集齐 5 章开启宝箱</button>
+
+  <button class="reset-btn" id="resetBtn">↻ 清空今日集章</button>
+
+  <div class="footer-hint">每天 24:00 重置 · 数据自动保存</div>
+</div>
+
+<!-- 奖品弹窗 -->
+<div class="prize-modal" id="prizeModal">
+  <div class="prize-box">
+    <div class="chest" id="chest">🎁</div>
+    <div class="prize-result" id="prizeResult">
+      <span class="prize-emoji" id="prizeEmoji">⭐</span>
+      <div class="prize-label">恭喜获得</div>
+      <div class="prize-name" id="prizeName">3 积分</div>
+      <button class="close-btn" id="closeBtn">太棒了！</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ══════════════ 数据模型 ══════════════
+const STORAGE_KEY = 'stampGame_data';
+
+// 任务列表
+const TASKS = [
+  { id: 'read',    name: '阅读', icon: '📖' },
+  { id: 'write',   name: '写字', icon: '✍️' },
+  { id: 'english', name: '英语', icon: '🔤' },
+  { id: 'math',    name: '数学', icon: '➗' },
+  { id: 'cube',    name: '魔方', icon: '🧊' },
+  { id: 'labor',   name: '劳动', icon: '🧹' },
+  { id: 'dance',   name: '街舞', icon: '🕺' },
+  { id: 'recite',  name: '背诵', icon: '📝' },
+];
+
+// 奖品概率表（基于当日集章数，5~8章梯度）
+function getProbability(stampCount) {
+  if (stampCount >= 8) return { points: 0.25, game: 0.45, snack: 0.30 };
+  if (stampCount === 7) return { points: 0.35, game: 0.40, snack: 0.25 };
+  if (stampCount === 6) return { points: 0.45, game: 0.35, snack: 0.20 };
+  // 默认 5 章
+  return { points: 0.55, game: 0.30, snack: 0.15 };
+}
+
+// ══════════════ 状态管理 ══════════════
+let state = {
+  date: '',           // 今日日期 YYYY-MM-DD
+  doneTasks: [],      // 已完成任务 id
+  redeemed: false,    // 今日是否已兑换
+  lastPrize: null,    // 今日奖品
+};
+
+// 获取今日日期字符串
+function getToday() {
+  const d = new Date();
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${y}-${m}-${day}`;
+}
+
+// 格式化日期显示（中文）
+function formatDateDisplay(dateStr) {
+  const d = new Date(dateStr);
+  const week = ['日', '一', '二', '三', '四', '五', '六'][d.getDay()];
+  return `${dateStr} · 星期${week}`;
+}
+
+// 加载状态（含跨日重置）
+function loadState() {
+  const saved = localStorage.getItem(STORAGE_KEY);
+  const today = getToday();
+  if (saved) {
+    try {
+      const parsed = JSON.parse(saved);
+      if (parsed.date === today) {
+        state = parsed;
+        return;
+      }
+    } catch (e) {}
+  }
+  // 跨日或首次：重置
+  state = { date: today, doneTasks: [], redeemed: false, lastPrize: null };
+  saveState();
+}
+
+// 保存状态
+function saveState() {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+}
+
+// ══════════════ DOM 渲染 ══════════════
+const tasksGrid = document.getElementById('tasksGrid');
+const stampCountEl = document.getElementById('stampCount');
+const progressFill = document.getElementById('progressFill');
+const probHint = document.getElementById('probHint');
+const redeemBtn = document.getElementById('redeemBtn');
+const dateDisplay = document.getElementById('dateDisplay');
+
+// 渲染任务按钮
+function renderTasks() {
+  tasksGrid.innerHTML = '';
+  TASKS.forEach(task => {
+    const btn = document.createElement('button');
+    btn.className = 'task-btn';
+    btn.dataset.taskId = task.id;
+    const isDone = state.doneTasks.includes(task.id);
+    if (isDone) btn.classList.add('done');
+    btn.innerHTML = `
+      <div class="task-icon">${task.icon}</div>
+      <div class="task-name">${task.name}</div>
+      <div class="stamp">🌟</div>
+    `;
+    if (!isDone) {
+      btn.addEventListener('click', () => onTaskClick(task.id, btn));
+    }
+    tasksGrid.appendChild(btn);
+  });
+}
+
+// 渲染进度和兑换按钮
+function renderProgress() {
+  const count = state.doneTasks.length;
+  stampCountEl.textContent = count;
+  progressFill.style.width = Math.min(count / 8 * 100, 100) + '%';
+
+  // 概率提示
+  const prob = getProbability(count);
+  const displayCount = Math.max(count, 5);
+  const probData = getProbability(displayCount);
+  probHint.innerHTML = `集越多章，好奖品概率越高 · 当前（${displayCount}章）：<span class="prob-points">积分 ${Math.round(probData.points*100)}%</span> / <span class="prob-game">游戏 ${Math.round(probData.game*100)}%</span> / <span class="prob-snack">零食 ${Math.round(probData.snack*100)}%</span>`;
+
+  // 兑换按钮状态
+  if (state.redeemed) {
+    redeemBtn.className = 'redeem-btn locked';
+    redeemBtn.textContent = '✅ 今日已兑换 · 明天再来';
+    redeemBtn.disabled = true;
+  } else if (count >= 5) {
+    redeemBtn.className = 'redeem-btn active';
+    redeemBtn.textContent = `🎁 开启宝箱（${count}章）`;
+    redeemBtn.disabled = false;
+  } else {
+    redeemBtn.className = 'redeem-btn';
+    redeemBtn.textContent = `🔒 还差 ${5 - count} 个章`;
+    redeemBtn.disabled = true;
+  }
+}
+
+// 渲染日期
+function renderDate() {
+  dateDisplay.textContent = formatDateDisplay(state.date);
+}
+
+// 全量渲染
+function renderAll() {
+  renderDate();
+  renderTasks();
+  renderProgress();
+}
+
+// ══════════════ 交互逻辑 ══════════════
+// 清空按钮（二次确认）
+const resetBtn = document.getElementById('resetBtn');
+let resetConfirming = false;
+let resetTimer = null;
+resetBtn.addEventListener('click', () => {
+  if (state.doneTasks.length === 0 && !state.redeemed) return;
+  if (!resetConfirming) {
+    resetConfirming = true;
+    resetBtn.classList.add('confirm');
+    resetBtn.textContent = '⚠️ 再点一次确认清空';
+    resetTimer = setTimeout(() => {
+      resetConfirming = false;
+      resetBtn.classList.remove('confirm');
+      resetBtn.textContent = '↻ 清空今日集章';
+    }, 3000);
+  } else {
+    clearTimeout(resetTimer);
+    resetConfirming = false;
+    resetBtn.classList.remove('confirm');
+    resetBtn.textContent = '↻ 清空今日集章';
+    state.doneTasks = [];
+    state.redeemed = false;
+    state.lastPrize = null;
+    saveState();
+    renderAll();
+  }
+});
+
+// 点击任务
+function onTaskClick(taskId, btn) {
+  state.doneTasks.push(taskId);
+  saveState();
+  // 盖章动画
+  btn.classList.add('done', 'just-done');
+  setTimeout(() => btn.classList.remove('just-done'), 500);
+  // 按钮点击后禁用（防止重复点）
+  btn.style.pointerEvents = 'none';
+  // 更新进度和兑换按钮
+  renderProgress();
+}
+
+// 抽奖
+function drawPrize(stampCount) {
+  const prob = getProbability(stampCount);
+  const r = Math.random();
+  if (r < prob.points) {
+    const points = Math.floor(Math.random() * 8) + 3; // 3~10
+    return { type: 'points', value: points, emoji: '⭐', name: `${points} 积分` };
+  } else if (r < prob.points + prob.game) {
+    return { type: 'game', emoji: '🎮', name: '手机游戏 1 次' };
+  } else {
+    return { type: 'snack', emoji: '🍪', name: '零食 1 份' };
+  }
+}
+
+// 点击兑换
+redeemBtn.addEventListener('click', () => {
+  if (redeemBtn.disabled || state.redeemed) return;
+  const count = state.doneTasks.length;
+  if (count < 5) return;
+
+  const prize = drawPrize(count);
+  state.redeemed = true;
+  state.lastPrize = prize;
+  saveState();
+
+  // 播放开箱动画
+  playChestAnimation(prize);
+  // 锁定按钮
+  renderProgress();
+});
+
+// 开箱动画
+function playChestAnimation(prize) {
+  const modal = document.getElementById('prizeModal');
+  const chest = document.getElementById('chest');
+  const result = document.getElementById('prizeResult');
+  const emojiEl = document.getElementById('prizeEmoji');
+  const nameEl = document.getElementById('prizeName');
+
+  // 重置
+  chest.style.display = 'inline-block';
+  chest.classList.remove('shaking', 'opening');
+  result.classList.remove('show');
+
+  modal.classList.add('show');
+
+  // 1. 晃动
+  setTimeout(() => chest.classList.add('shaking'), 200);
+
+  // 2. 爆开 + 显示奖品
+  setTimeout(() => {
+    chest.classList.add('opening');
+    spawnParticles();
+    setTimeout(() => {
+      chest.style.display = 'none';
+      emojiEl.textContent = prize.emoji;
+      nameEl.textContent = prize.name;
+      result.classList.add('show');
+    }, 350);
+  }, 1400);
+}
+
+// 粒子效果
+function spawnParticles() {
+  const symbols = ['✨', '⭐', '🌟', '💫', '🎉'];
+  const modal = document.getElementById('prizeModal');
+  const rect = modal.getBoundingClientRect();
+  const cx = rect.width / 2;
+  const cy = rect.height / 2;
+  for (let i = 0; i < 16; i++) {
+    const p = document.createElement('div');
+    p.className = 'particle';
+    p.textContent = symbols[Math.floor(Math.random() * symbols.length)];
+    p.style.left = cx + 'px';
+    p.style.top = cy + 'px';
+    const angle = (Math.PI * 2 * i) / 16 + Math.random() * 0.5;
+    const dist = 150 + Math.random() * 100;
+    p.style.setProperty('--dx', Math.cos(angle) * dist + 'px');
+    p.style.setProperty('--dy', Math.sin(angle) * dist + 'px');
+    modal.appendChild(p);
+    setTimeout(() => p.remove(), 1000);
+  }
+}
+
+// 关闭弹窗
+document.getElementById('closeBtn').addEventListener('click', () => {
+  document.getElementById('prizeModal').classList.remove('show');
+});
+
+// 点击遮罩关闭
+document.getElementById('prizeModal').addEventListener('click', (e) => {
+  if (e.target.id === 'prizeModal') {
+    document.getElementById('prizeModal').classList.remove('show');
+  }
+});
+
+// ══════════════ 启动 ══════════════
+loadState();
+renderAll();
+
+// 每分钟检测一次是否跨日（应对长时间不关页面）
+setInterval(() => {
+  const today = getToday();
+  if (state.date !== today) {
+    loadState();
+    renderAll();
+  }
+}, 60000);
+</script>
+
+</body>
+</html>
