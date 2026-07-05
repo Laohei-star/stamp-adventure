@@ -129,7 +129,6 @@
   .prob-points { color: #60a5fa; }
   .prob-game { color: var(--purple); }
   .prob-snack { color: var(--gold); }
-
   /* ══════════════ 任务按钮区 ══════════════ */
   .tasks-grid {
     display: grid;
@@ -481,11 +480,11 @@ const TASKS = [
 
 // 奖品概率表（基于当日集章数，5~8章梯度）
 function getProbability(stampCount) {
-  if (stampCount >= 8) return { points: 0.25, game: 0.45, snack: 0.30 };
-  if (stampCount === 7) return { points: 0.35, game: 0.40, snack: 0.25 };
-  if (stampCount === 6) return { points: 0.45, game: 0.35, snack: 0.20 };
+  if (stampCount >= 8) return { points: 0.20, game: 0.40, snack: 0.25, bigSnack: 0.15 };
+  if (stampCount === 7) return { points: 0.30, game: 0.38, snack: 0.22, bigSnack: 0.10 };
+  if (stampCount === 6) return { points: 0.40, game: 0.35, snack: 0.20, bigSnack: 0.05 };
   // 默认 5 章
-  return { points: 0.55, game: 0.30, snack: 0.15 };
+  return { points: 0.55, game: 0.30, snack: 0.15, bigSnack: 0 };
 }
 
 // ══════════════ 状态管理 ══════════════
@@ -571,10 +570,19 @@ function renderProgress() {
   progressFill.style.width = Math.min(count / 8 * 100, 100) + '%';
 
   // 概率提示
-  const prob = getProbability(count);
   const displayCount = Math.max(count, 5);
   const probData = getProbability(displayCount);
-  probHint.innerHTML = `集越多章，好奖品概率越高 · 当前（${displayCount}章）：<span class="prob-points">积分 ${Math.round(probData.points*100)}%</span> / <span class="prob-game">游戏 ${Math.round(probData.game*100)}%</span> / <span class="prob-snack">零食 ${Math.round(probData.snack*100)}%</span>`;
+  let probHTML = `集越多章，好奖品概率越高 · `;
+  if (count < 5) {
+    probHTML += `最低（5章）：`;
+  } else {
+    probHTML += `当前（${displayCount}章）：`;
+  }
+  probHTML += `<span class="prob-points">积分 ${Math.round(probData.points*100)}%</span> / <span class="prob-game">游戏 ${Math.round(probData.game*100)}%</span> / <span class="prob-snack">零食 ${Math.round(probData.snack*100)}%</span>`;
+  if (probData.bigSnack > 0) {
+    probHTML += ` / <span class="prob-snack">大奖 ${Math.round(probData.bigSnack*100)}%</span>`;
+  }
+  probHint.innerHTML = probHTML;
 
   // 兑换按钮状态
   if (state.redeemed) {
@@ -650,14 +658,18 @@ function onTaskClick(taskId, btn) {
 function drawPrize(stampCount) {
   const prob = getProbability(stampCount);
   const r = Math.random();
-  if (r < prob.points) {
+  let acc = 0;
+  if (r < (acc += prob.points)) {
     const points = Math.floor(Math.random() * 8) + 3; // 3~10
     return { type: 'points', value: points, emoji: '⭐', name: `${points} 积分` };
-  } else if (r < prob.points + prob.game) {
+  }
+  if (r < (acc += prob.game)) {
     return { type: 'game', emoji: '🎮', name: '手机游戏 1 次' };
-  } else {
+  }
+  if (r < (acc += prob.snack)) {
     return { type: 'snack', emoji: '🍪', name: '零食 1 份' };
   }
+  return { type: 'bigSnack', emoji: '🎁', name: '零食两份（超级大奖）' };
 }
 
 // 点击兑换
